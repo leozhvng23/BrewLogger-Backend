@@ -35,7 +35,7 @@ const favoriteValidation = [
 
 router.get("/", recipesController.getAllRecipes);
 
-router.get("/:rid", recipesController.getRecipeById);
+router.get("/:id", recipesController.getRecipeById);
 
 router.get("/bean/:bid", recipesController.getRecipesByBeanId);
 
@@ -46,6 +46,10 @@ router.get("/favorites/:uid", recipesController.getFavoriteRecipes);
 router.post("/favorites/", favoriteValidation, recipesController.addFavorite);
 
 router.post("/", recipeValidation, recipesController.createRecipe);
+
+router.delete("/favorites/", recipesController.removeFavorite);
+
+router.delete("/:id", recipesController.deleteRecipe);
 
 // router.patch("/:pid", recipeValidation, recipesController.updateRecipe);
 

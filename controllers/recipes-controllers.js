@@ -14,13 +14,13 @@ const getAllRecipes = async (req, res, next) => {
 const getRecipeById = async (req, res, next) => {
 	let result;
 	try {
-		result = await db.query("SELECT * FROM recipes WHERE id = $1 ", [req.params.rid]);
+		result = await db.query("SELECT * FROM recipes WHERE id = $1 ", [req.params.id]);
 	} catch (err) {
 		return next(new Error("Fetching recipe failed, please try again later."));
 	}
 
 	if (!result.rows[0]) {
-		return next(new Error("Could not find a recipe for the provided rid."));
+		return next(new Error("Could not find a recipe for the provided recipe id."));
 	}
 	res.send(result.rows[0]);
 };
@@ -125,11 +125,14 @@ const addFavorite = async (req, res, next) => {
 
 	let result;
 	try {
-		result = await db.query("INSERT INTO saves(uid, id) VALUES ($1, $2) RETURNING *", [uid, id]);
+		result = await db.query(
+			"INSERT INTO saves(uid, id) VALUES ($1, $2) RETURNING *",
+			[uid, id]
+		);
 	} catch (err) {
 		return next(new Error("Adding favorite failed, please try again later"));
 	}
-	res.json({ message: "Removed from favorites.", record: result.rows})
+	res.json({ message: "Added to favorites.", record: result.rows });
 };
 
 const removeFavorite = async (req, res, next) => {
@@ -137,23 +140,33 @@ const removeFavorite = async (req, res, next) => {
 
 	let result;
 	try {
-		result = await db.query("SELECT FROM saves WHERE uid = $1 and id = $2", [uid, id]);
+		result = await db.query("SELECT * FROM saves WHERE uid = $1 and id = $2", [
+			uid,
+			id,
+		]);
 	} catch (err) {
 		return next(new Error("Removing favorite failed, please try again later"));
 	}
 
 	if (!result.rows[0]) {
-		return next(new Error("Could not find favorite record for provided user id and recipe id."));
+		return next(
+			new Error(
+				"Could not find favorite record for provided user id and recipe id."
+			)
+		);
 	}
 
 	try {
-		result = await db.query("DELETE FROM saves WHERE uid = $1 and id = $2", [uid, id]);
+		result = await db.query("DELETE FROM saves WHERE uid = $1 and id = $2", [
+			uid,
+			id,
+		]);
 	} catch (err) {
 		return next(new Error("Removing favorite failed, please try again later"));
-	}	
+	}
 
-	res.json({ message: "Removed from favorites."})
-}
+	res.json({ message: "Removed from favorites." });
+};
 
 const createRecipe = async (req, res, next) => {
 	const errors = validationResult(req);
@@ -200,7 +213,7 @@ const createRecipe = async (req, res, next) => {
 		const queryValues = [name, brew_time, yield, description, guide, photo_url, type];
 		const res = await client.query(queryText, queryValues);
 		const recipeId = res.rows[0].id;
-		console.log(recipeId);
+		console.log("created recipe id: " + recipeId);
 
 		await client.query(
 			"INSERT INTO requires_bean(bid, id, amount) VALUES ($1, $2, $3)",
@@ -226,7 +239,28 @@ const createRecipe = async (req, res, next) => {
 		client.release();
 	}
 
-	res.send(result.rows[0]);
+	res.json({ message: "New recipe created!" });
+};
+
+const deleteRecipe = async (req, res, next) => {
+	let result;
+	try {
+		result = await db.query("SELECT * FROM recipes WHERE id = $1", [req.params.id]);
+	} catch (err) {
+		return next(new Error("Removing recipe failed, please try again later"));
+	}
+
+	if (!result.rows[0]) {
+		return next(new Error("Could not find recipe for provided recipe id."));
+	}
+
+	try {
+		result = await db.query("DELETE FROM recipes WHERE id = $1", [req.params.id]);
+	} catch (err) {
+		return next(new Error("Removing recipe failed, please try again later"));
+	}
+
+	res.json({ message: "Deleted recipe." });
 };
 
 exports.getAllRecipes = getAllRecipes;
@@ -235,5 +269,6 @@ exports.getRecipesByUserId = getRecipesByUserId;
 exports.getRecipesByBeanId = getRecipesByBeanId;
 exports.getFavoriteRecipes = getFavoriteRecipes;
 exports.addFavorite = addFavorite;
-exports.removeFavorite = removeFavorite;
 exports.createRecipe = createRecipe;
+exports.removeFavorite = removeFavorite;
+exports.deleteRecipe = deleteRecipe;
