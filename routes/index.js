@@ -1,6 +1,6 @@
 const bodyParser = require("body-parser");
 const usersRoutes = require("./users-routes");
-// const recipesRoutes = require("./recipes-routes");
+const recipesRoutes = require("./recipes-routes");
 
 module.exports = (app) => {
 	app.use(bodyParser.json());
@@ -18,6 +18,7 @@ module.exports = (app) => {
 	});
 
     app.use("/api/users", usersRoutes);
+	app.use("/api/recipes", recipesRoutes);
 
 	app.use((req, res, next) => {
 		throw new Error("Could not find this route.");
