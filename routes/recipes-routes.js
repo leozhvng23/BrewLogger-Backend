@@ -8,7 +8,7 @@ const router = new Router();
 module.exports = router;
 
 const recipeValidation = [
-    check("uid").not().isEmpty(),
+	check("uid").not().isEmpty(),
 	check("name").not().isEmpty(),
 	check("description").not().isEmpty(),
 	check("brew_time").not().isEmpty(),
@@ -20,20 +20,33 @@ const recipeValidation = [
 	check("bid").isNumeric(),
 	check("bean_amount").not().isEmpty(),
 	check("bean_amount").isNumeric(),
-    check("eid_brewer").not().isEmpty(),
-    check("eid_brewer").isNumeric(),
-    check("eid_grinder").not().isEmpty(),
-    check("eid_grinder").isNumeric()
+	check("eid_brewer").not().isEmpty(),
+	check("eid_brewer").isNumeric(),
+	check("eid_grinder").not().isEmpty(),
+	check("eid_grinder").isNumeric(),
+];
+
+const favoriteValidation = [
+	check("uid").not().isEmpty(),
+	check("uid").isNumeric(),
+	check("id").not().isEmpty(),
+	check("id").isNumeric(),
 ];
 
 router.get("/", recipesController.getAllRecipes);
 
 router.get("/:rid", recipesController.getRecipeById);
 
+router.get("/bean/:bid", recipesController.getRecipesByBeanId);
+
 router.get("/user/:uid", recipesController.getRecipesByUserId);
+
+router.get("/favorites/:uid", recipesController.getFavoriteRecipes);
+
+router.post("/favorites/", favoriteValidation, recipesController.addFavorite);
 
 router.post("/", recipeValidation, recipesController.createRecipe);
 
-router.patch("/:pid", recipeValidation, recipesController.updateRecipe);
+// router.patch("/:pid", recipeValidation, recipesController.updateRecipe);
 
-router.delete("/:pid", recipesController.deleteRecipe);
+// router.delete("/:pid", recipesController.deleteRecipe);
