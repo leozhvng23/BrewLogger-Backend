@@ -47,10 +47,10 @@ router.post("/favorites/", favoriteValidation, recipesController.addFavorite);
 
 router.post("/", recipeValidation, recipesController.createRecipe);
 
+router.patch("/:id", recipeValidation, recipesController.updateRecipe);
+
 router.delete("/favorites/", recipesController.removeFavorite);
 
 router.delete("/:id", recipesController.deleteRecipe);
 
-// router.patch("/:pid", recipeValidation, recipesController.updateRecipe);
 
-// router.delete("/:pid", recipesController.deleteRecipe);

@@ -135,39 +135,6 @@ const addFavorite = async (req, res, next) => {
 	res.json({ message: "Added to favorites.", record: result.rows });
 };
 
-const removeFavorite = async (req, res, next) => {
-	const { uid, id } = req.body;
-
-	let result;
-	try {
-		result = await db.query("SELECT * FROM saves WHERE uid = $1 and id = $2", [
-			uid,
-			id,
-		]);
-	} catch (err) {
-		return next(new Error("Removing favorite failed, please try again later"));
-	}
-
-	if (!result.rows[0]) {
-		return next(
-			new Error(
-				"Could not find favorite record for provided user id and recipe id."
-			)
-		);
-	}
-
-	try {
-		result = await db.query("DELETE FROM saves WHERE uid = $1 and id = $2", [
-			uid,
-			id,
-		]);
-	} catch (err) {
-		return next(new Error("Removing favorite failed, please try again later"));
-	}
-
-	res.json({ message: "Removed from favorites." });
-};
-
 const createRecipe = async (req, res, next) => {
 	const errors = validationResult(req);
 	console.log(errors);
@@ -242,6 +209,129 @@ const createRecipe = async (req, res, next) => {
 	res.json({ message: "New recipe created!" });
 };
 
+const updateRecipe = async (req, res, next) => {
+	const errors = validationResult(req);
+	console.log(errors);
+	if (!errors.isEmpty()) {
+		return next(new Error("Invalid inputs passed, please check your data."));
+	}
+	const {
+		uid,
+		name,
+		description,
+		brew_time,
+		guide,
+		yield,
+		type,
+		photo_url,
+		bid,
+		bean_amount,
+		eid_brewer,
+		eid_grinder,
+		setting_brewer,
+		setting_grinder,
+	} = req.body;
+
+	let result;
+	try {
+		result = await db.query("SELECT * FROM make WHERE uid = $1 AND id = $2", [
+			uid,
+			req.params.id,
+		]);
+	} catch (err) {
+		return next(new Error("Updating recipe failed, please try again later"));
+	}
+
+	if (!result.rows[0]) {
+		return next(
+			new Error("Could not find recipe record for provided user id and recipe id.")
+		);
+	}
+	const start = Date.now();
+	const client = await db.getClient();
+	try {
+		await client.query("BEGIN");
+		const queryText =
+			"UPDATE recipes SET name = $1, brew_time = $2, yield = $3, description = $4, guide = $5, photo_url = $6, type = $7 WHERE id = $8";
+		const queryValues = [
+			name,
+			brew_time,
+			yield,
+			description,
+			guide,
+			photo_url,
+			type,
+			req.params.id,
+		];
+		await client.query(queryText, queryValues);
+		console.log("updated recipes");
+		await client.query(
+			"UPDATE requires_bean SET bid = $1, amount = $2 WHERE id = $3",
+			[bid, bean_amount, req.params.id]
+		);
+		console.log("updated requires_beans");
+
+		await client.query("DELETE FROM requires_equipment WHERE id = $1", [
+			req.params.id,
+		]);
+		console.log("Delete data from requires_equipments");
+		await client.query(
+			"INSERT INTO requires_equipment(eid, id, setting) VALUES ($1, $2, $3)",
+			[eid_brewer, req.params.id, setting_brewer]
+		);
+		console.log("updated brewer in requires_equipment");
+		await client.query(
+			"INSERT INTO requires_equipment(eid, id, setting) VALUES ($1, $2, $3)",
+			[eid_grinder, req.params.id, setting_grinder]
+		);
+		console.log("updated grinder in requires_equipment");
+		await client.query("COMMIT");
+		console.log("update complete")
+	} catch (err) {
+		await client.query("ROLLBACK");
+		return next(new Error("Updating recipe failed, please try again later."));
+	} finally {
+		client.release();
+		console.log("executed queries in " + (Date.now() - start));
+	}
+	
+
+	res.json({ message: "Recipe updated!" });
+};
+
+const removeFavorite = async (req, res, next) => {
+	const { uid, id } = req.body;
+
+	let result;
+	try {
+		result = await db.query("SELECT * FROM saves WHERE uid = $1 and id = $2", [
+			uid,
+			id,
+		]);
+	} catch (err) {
+		return next(new Error("Removing favorite failed, please try again later"));
+	}
+
+	if (!result.rows[0]) {
+		return next(
+			new Error(
+				"Could not find favorite record for provided user id and recipe id."
+			)
+		);
+	}
+
+	try {
+		result = await db.query("DELETE FROM saves WHERE uid = $1 and id = $2", [
+			uid,
+			id,
+		]);
+	} catch (err) {
+		return next(new Error("Removing favorite failed, please try again later"));
+	}
+
+	res.json({ message: "Removed from favorites." });
+};
+
 const deleteRecipe = async (req, res, next) => {
 	let result;
 	try {
@@ -270,5 +360,6 @@ exports.getRecipesByBeanId = getRecipesByBeanId;
 exports.getFavoriteRecipes = getFavoriteRecipes;
 exports.addFavorite = addFavorite;
 exports.createRecipe = createRecipe;
+exports.updateRecipe = updateRecipe;
 exports.removeFavorite = removeFavorite;
 exports.deleteRecipe = deleteRecipe;
