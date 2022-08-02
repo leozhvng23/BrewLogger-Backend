@@ -11,7 +11,6 @@ module.exports = {
 		const res = await pool.query(text, params);
 		const duration = Date.now() - start;
 		console.log("executed query", { text, duration, rows: res.rowCount });
-        console.log(res);
 		return res;
 	},
 	async getClient() {
