@@ -12,9 +12,40 @@ const getAllRecipes = async (req, res, next) => {
 };
 
 const getRecipeById = async (req, res, next) => {
+	const queryText = `
+		SELECT recipes.id AS id, 
+			recipes.name AS name, 
+			recipes.description AS description,
+			recipes.photo_url AS photo_url, 
+			recipes.type AS type,
+			recipes.yield AS yield,
+			recipes.brew_time as brew_time,
+			recipes.guide as guide,
+			bean_roasts.name as bean_name,
+			bean_roasts.bid as bid,
+			users.name as user_name,
+			users.uid as uid,
+			make.time as created_on,
+			brewers.name as brewer,
+			brewers.eid as brewer_eid,
+			grinders.eid as grinder_eid,
+			requires_brewer.setting as brewer_setting,
+			requires_grinder.setting as grinder_setting,
+			grinders.name as grinder
+		FROM recipes 
+			left join make using (id)
+			left join users using (uid)
+			left join requires_bean using (id)
+			left join bean_roasts using (bid)
+			left join requires_brewer using(id)
+			left join requires_grinder using(id)
+			left join equipments brewers on brewers.eid = requires_brewer.eid
+			left join equipments grinders on grinders.eid = requires_grinder.eid
+		WHERE recipes.id = $1`;
+
 	let result;
 	try {
-		result = await db.query("SELECT * FROM recipes WHERE id = $1 ", [req.params.id]);
+		result = await db.query(queryText, [req.params.id]);
 	} catch (err) {
 		return next(new Error("Fetching recipe failed, please try again later."));
 	}
@@ -26,23 +57,40 @@ const getRecipeById = async (req, res, next) => {
 };
 
 const getRecipesByUserId = async (req, res, next) => {
+	const queryText = `
+	SELECT recipes.id AS id, 
+		recipes.name AS name, 
+		recipes.description AS description,
+		recipes.photo_url AS photo_url, 
+		recipes.type AS type,
+		recipes.yield AS yield,
+		recipes.brew_time as brew_time,
+		recipes.guide as guide,
+		bean_roasts.name as bean_name,
+		bean_roasts.bid as bid,
+		users.name as user_name,
+		users.uid as uid,
+		make.time as created_on,
+		brewers.name as brewer,
+		brewers.eid as brewer_eid,
+		grinders.eid as grinder_eid,
+		requires_brewer.setting as brewer_setting,
+		requires_grinder.setting as grinder_setting,
+		grinders.name as grinder
+	FROM recipes 
+		left join make using (id)
+		left join users using (uid)
+		left join requires_bean using (id)
+		left join bean_roasts using (bid)
+		left join requires_brewer using(id)
+		left join requires_grinder using(id)
+		left join equipments brewers on brewers.eid = requires_brewer.eid
+		left join equipments grinders on grinders.eid = requires_grinder.eid
+	WHERE users.uid = $1`;
+	
 	let result;
 	try {
-		result = await db.query(
-			`SELECT recipes.id AS id, 
-                recipes.name AS name, 
-                recipes.photo_url AS photo_url, 
-                recipes.type AS type,
-                recipes.brew_time as brew_time,
-                equipments.name AS brewer 
-            FROM recipes, make, requires_equipment, equipments 
-            WHERE make.uid = $1 
-                AND make.id = recipes.id 
-                AND requires_equipment.id = recipes.id 
-                AND equipments.eid = requires_equipment.eid 
-                AND equipments.type = 'brewer'`,
-			[req.params.uid]
-		);
+		result = await db.query(queryText, [req.params.uid]);
 	} catch (err) {
 		return next(new Error("Fetching recipes failed, please try again later."));
 	}
@@ -286,7 +334,7 @@ const updateRecipe = async (req, res, next) => {
 		);
 		console.log("updated grinder in requires_equipment");
 		await client.query("COMMIT");
-		console.log("update complete")
+		console.log("update complete");
 	} catch (err) {
 		await client.query("ROLLBACK");
 		return next(new Error("Updating recipe failed, please try again later."));
@@ -294,7 +342,6 @@ const updateRecipe = async (req, res, next) => {
 		client.release();
 		console.log("executed queries in " + (Date.now() - start));
 	}
-	
 
 	res.json({ message: "Recipe updated!" });
 };
