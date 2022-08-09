@@ -37,11 +37,13 @@ router.get("/", recipesController.getAllRecipes);
 
 router.get("/:id", recipesController.getRecipeById);
 
+router.get("/feed/", recipesController.getFeedRecipes);
+
 router.get("/bean/:bid", recipesController.getRecipesByBeanId);
 
 router.get("/user/:uid", recipesController.getRecipesByUserId);
 
-router.get("/favorites/:uid", recipesController.getFavoriteRecipes);
+router.get("/favorites/:uid", recipesController.getFavoriteRecipes); // delete :uid
 
 router.post("/favorites/", favoriteValidation, recipesController.addFavorite);
 
