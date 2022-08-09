@@ -11,6 +11,53 @@ const getAllRecipes = async (req, res, next) => {
 	res.send(result.rows);
 };
 
+const getPopularRecipes = async (req, res, next) => {
+	const queryText = `
+	SELECT recipes.id AS id, 
+			recipes.name AS name, 
+			recipes.description AS description,
+			recipes.photo_url AS photo_url, 
+			recipes.type AS type,
+			recipes.brew_time AS brew_time
+			bean_roasts.name AS bean_name,
+			bean_roasts.bid AS bid,
+			users.name AS user_name,
+			users.uid AS uid,
+			make.time AS created_on,
+			brewers.name AS brewer,
+			brewers.eid AS brewer_eid,
+			comments.count AS num_of_comments,
+			likes.count AS num_of_likes
+		FROM recipes 
+			join make using(id)
+			join users using (uid)
+			join requires_bean using (id)
+			join bean_roasts using (bid)
+			join requires_brewer using(id)
+			join equipments brewers on brewers.eid = requires_brewer.eid
+			join (
+					SELECT id, count(*) AS count 
+					FROM comment_posted 
+					GROUP BY id
+				) AS comments USING(id)
+			join (
+					SELECT id, count(*) AS count 
+					FROM like_recipe 
+					GROUP BY id
+					) AS likes USING(id) 
+		ORDER BY num_of_likes desc
+        LIMIT $1`;
+
+	let result;
+	try {
+		result = await db.query(queryText, [req.params.num]);
+	} catch (err) {
+		return next(new Error("Fetching popular recipes failed, please try again later."));
+	}
+
+	res.send(result.rows);
+};
+
 const getFeedRecipes = async (req, res, next) => {
 	const queryText = `
 		SELECT recipes.id AS id, 
@@ -464,6 +511,7 @@ const deleteRecipe = async (req, res, next) => {
 
 exports.getAllRecipes = getAllRecipes;
 exports.getRecipeById = getRecipeById;
+exports.getPopularRecipes = getPopularRecipes;
 exports.getFeedRecipes = getFeedRecipes;
 exports.getRecipesByUserId = getRecipesByUserId;
 exports.getRecipesByBeanId = getRecipesByBeanId;
