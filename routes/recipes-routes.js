@@ -34,7 +34,7 @@ const favoriteValidation = [
 ];
 
 
-router.get("/popular/:num", recipesController.getPopularRecipes)
+router.get("/popular/", recipesController.getPopularRecipes)
 
 router.get("/feed/:uid", recipesController.getFeedRecipes);
 

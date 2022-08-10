@@ -18,7 +18,7 @@ const getPopularRecipes = async (req, res, next) => {
 			recipes.description AS description,
 			recipes.photo_url AS photo_url, 
 			recipes.type AS type,
-			recipes.brew_time AS brew_time
+            recipes.brew_time AS brew_time,
 			bean_roasts.name AS bean_name,
 			bean_roasts.bid AS bid,
 			users.name AS user_name,
@@ -46,16 +46,16 @@ const getPopularRecipes = async (req, res, next) => {
 					GROUP BY id
 					) AS likes USING(id) 
 		ORDER BY num_of_likes desc
-        LIMIT $1`;
+        LIMIT 5`
 
 	let result;
 	try {
-		result = await db.query(queryText, [req.params.num]);
+		result = await db.query(queryText, []);
 	} catch (err) {
 		return next(new Error("Fetching popular recipes failed, please try again later."));
 	}
-
 	res.send(result.rows);
+
 };
 
 const getFeedRecipes = async (req, res, next) => {
