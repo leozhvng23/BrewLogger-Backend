@@ -1,6 +1,8 @@
 const { validationResult } = require("express-validator");
 const db = require("../db");
 
+const uid = 6
+
 const getAllRecipes = async (req, res, next) => {
 	let result;
 	try {
@@ -72,8 +74,9 @@ const getFeedRecipes = async (req, res, next) => {
 			make.time AS created_on,
 			brewers.name AS brewer,
 			brewers.eid AS brewer_eid,
-			comments.count AS num_of_comments,
-			likes.count AS num_of_likes
+			comments.count :: int AS num_of_comments,
+			likes.count :: int AS num_of_likes,
+			saves.count AS is_saved 
 		FROM recipes 
 			join make using(id)
 			join users using (uid)
@@ -92,10 +95,15 @@ const getFeedRecipes = async (req, res, next) => {
 					FROM like_recipe 
 					GROUP BY id
 					) AS likes USING(id) 
+			left join (
+					SELECT id, count(*) AS count
+					FROM saves
+					WHERE uid = $1 
+					GROUP BY id
+				) AS saves USING(id)
 		WHERE follow.uid_1 = $1
 		ORDER BY created_on desc
 		`
-
 	let result;
 	try {
 		result = await db.query(queryText, [req.params.uid]);
@@ -131,8 +139,9 @@ const getRecipeById = async (req, res, next) => {
 			requires_brewer.setting as brewer_setting,
 			requires_grinder.setting as grinder_setting,
 			grinders.name as grinder,
-			comments.count AS num_of_comments,
-			likes.count AS num_of_likes
+			comments.count :: int AS num_of_comments,
+			likes.count :: int AS num_of_likes,
+			saves.count AS is_saved
 		FROM recipes 
 			left join make using (id)
 			left join users using (uid)
@@ -151,12 +160,18 @@ const getRecipeById = async (req, res, next) => {
 					SELECT id, count(*) AS count 
 					FROM like_recipe 
 					GROUP BY id
-				) AS likes USING(id) 
+				) AS likes USING(id)
+			left join (
+					SELECT id, count(*) AS count
+					FROM saves
+					WHERE uid = $2 
+					GROUP BY id
+				) AS saves USING(id) 
 		WHERE recipes.id = $1`;
 
 	let result;
 	try {
-		result = await db.query(queryText, [req.params.id]);
+		result = await db.query(queryText, [req.params.id, uid]);
 	} catch (err) {
 		return next(new Error("Fetching recipe failed, please try again later."));
 	}
@@ -188,8 +203,9 @@ const getRecipesByUserId = async (req, res, next) => {
 		requires_brewer.setting as brewer_setting,
 		requires_grinder.setting as grinder_setting,
 		grinders.name as grinder,
-		comments.count AS num_of_comments,
-		likes.count AS num_of_likes
+		comments.count :: int AS num_of_comments,
+		likes.count :: int AS num_of_likes,
+		saves.count AS is_saved
 	FROM recipes 
 		left join make using (id)
 		left join users using (uid)
@@ -208,7 +224,13 @@ const getRecipesByUserId = async (req, res, next) => {
 				SELECT id, count(*) AS count 
 				FROM like_recipe 
 				GROUP BY id
-			) AS likes USING(id) 
+			) AS likes USING(id)
+		left join (
+				SELECT id, count(*) AS count
+				FROM saves
+				WHERE uid = $1
+				GROUP BY id
+			) AS saves USING(id)  
 	WHERE users.uid = $1`;
 
 	let result;
