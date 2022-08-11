@@ -285,6 +285,7 @@ const getFavoriteRecipes = async (req, res, next) => {
 	res.send(result.rows);
 };
 
+
 const addFavorite = async (req, res, next) => {
 	const errors = validationResult(req);
 	console.log(errors);
