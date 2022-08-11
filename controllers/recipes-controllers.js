@@ -35,17 +35,17 @@ const getPopularRecipes = async (req, res, next) => {
 			join bean_roasts using (bid)
 			join requires_brewer using(id)
 			join equipments brewers on brewers.eid = requires_brewer.eid
-			join (
+			left join (
 					SELECT id, count(*) AS count 
 					FROM comment_posted 
 					GROUP BY id
 				) AS comments USING(id)
-			join (
+			left join (
 					SELECT id, count(*) AS count 
 					FROM like_recipe 
 					GROUP BY id
 					) AS likes USING(id) 
-		ORDER BY num_of_likes desc
+		ORDER BY num_of_likes desc NULLS LAST
         LIMIT 5`
 
 	let result;
@@ -82,17 +82,19 @@ const getFeedRecipes = async (req, res, next) => {
 			join bean_roasts using (bid)
 			join requires_brewer using(id)
 			join equipments brewers on brewers.eid = requires_brewer.eid
-			join (
+			left join (
 					SELECT id, count(*) AS count 
 					FROM comment_posted 
 					GROUP BY id
 				) AS comments USING(id)
-			join (
+			left join (
 					SELECT id, count(*) AS count 
 					FROM like_recipe 
 					GROUP BY id
 					) AS likes USING(id) 
-		WHERE follow.uid_1 = $1`;
+		WHERE follow.uid_1 = $1
+		ORDER BY created_on desc
+		`
 
 	let result;
 	try {
@@ -140,12 +142,12 @@ const getRecipeById = async (req, res, next) => {
 			left join requires_grinder using(id)
 			left join equipments brewers on brewers.eid = requires_brewer.eid
 			left join equipments grinders on grinders.eid = requires_grinder.eid
-			join (
+			left join (
 					SELECT id, count(*) AS count 
 					FROM comment_posted 
 					GROUP BY id
 				) AS comments USING(id)
-			join (
+			left join (
 					SELECT id, count(*) AS count 
 					FROM like_recipe 
 					GROUP BY id
@@ -185,7 +187,9 @@ const getRecipesByUserId = async (req, res, next) => {
 		grinders.eid as grinder_eid,
 		requires_brewer.setting as brewer_setting,
 		requires_grinder.setting as grinder_setting,
-		grinders.name as grinder
+		grinders.name as grinder,
+		comments.count AS num_of_comments,
+		likes.count AS num_of_likes
 	FROM recipes 
 		left join make using (id)
 		left join users using (uid)
@@ -195,6 +199,16 @@ const getRecipesByUserId = async (req, res, next) => {
 		left join requires_grinder using(id)
 		left join equipments brewers on brewers.eid = requires_brewer.eid
 		left join equipments grinders on grinders.eid = requires_grinder.eid
+		left join (
+			SELECT id, count(*) AS count 
+			FROM comment_posted 
+			GROUP BY id
+		) AS comments USING(id)
+		left join (
+				SELECT id, count(*) AS count 
+				FROM like_recipe 
+				GROUP BY id
+			) AS likes USING(id) 
 	WHERE users.uid = $1`;
 
 	let result;
