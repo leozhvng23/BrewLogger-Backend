@@ -26,12 +26,7 @@ const recipeValidation = [
 	check("eid_grinder").isNumeric(),
 ];
 
-const favoriteValidation = [
-	check("uid").not().isEmpty(),
-	check("uid").isNumeric(),
-	check("id").not().isEmpty(),
-	check("id").isNumeric(),
-];
+
 
 
 router.get("/popular/", recipesController.getPopularRecipes)
@@ -48,13 +43,15 @@ router.get("/:id", recipesController.getRecipeById);
 
 router.get("/", recipesController.getAllRecipes);
 
-router.post("/favorites/", favoriteValidation, recipesController.addFavorite);
+router.get("/favorite/ids", recipesController.getFavoriteIds);
+
+router.post("/favorites/:id", recipesController.addFavorite);
 
 router.post("/", recipeValidation, recipesController.createRecipe);
 
 router.patch("/:id", recipeValidation, recipesController.updateRecipe);
 
-router.delete("/favorites/", recipesController.removeFavorite);
+router.delete("/favorites/:id", recipesController.removeFavorite);
 
 router.delete("/:id", recipesController.deleteRecipe);
 

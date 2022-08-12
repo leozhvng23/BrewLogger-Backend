@@ -307,6 +307,21 @@ const getFavoriteRecipes = async (req, res, next) => {
 	res.send(result.rows);
 };
 
+const getFavoriteIds = async (req, res, next) => {
+	const queryText = `
+		SELECT saves.id
+		FROM saves 
+		WHERE uid = $1
+	`
+	let result;
+	try {
+		result = await db.query(queryText, [uid]);
+	} catch (err) {
+		return next (new Error("Fetching favorite ids failed, please try again later."));
+	}
+	res.send(result.rows)
+}
+
 
 const addFavorite = async (req, res, next) => {
 	const errors = validationResult(req);
@@ -315,13 +330,11 @@ const addFavorite = async (req, res, next) => {
 		return next(new Error("Invalid params passed."));
 	}
 
-	const { uid, id } = req.body;
-
 	let result;
 	try {
 		result = await db.query(
 			"INSERT INTO saves(uid, id) VALUES ($1, $2) RETURNING *",
-			[uid, id]
+			[uid, req.params.id]
 		);
 	} catch (err) {
 		return next(new Error("Adding favorite failed, please try again later"));
@@ -493,13 +506,12 @@ const updateRecipe = async (req, res, next) => {
 };
 
 const removeFavorite = async (req, res, next) => {
-	const { uid, id } = req.body;
 
 	let result;
 	try {
 		result = await db.query("SELECT * FROM saves WHERE uid = $1 and id = $2", [
 			uid,
-			id,
+			req.params.id,
 		]);
 	} catch (err) {
 		return next(new Error("Removing favorite failed, please try again later"));
@@ -516,7 +528,7 @@ const removeFavorite = async (req, res, next) => {
 	try {
 		result = await db.query("DELETE FROM saves WHERE uid = $1 and id = $2", [
 			uid,
-			id,
+			req.params.id,
 		]);
 	} catch (err) {
 		return next(new Error("Removing favorite failed, please try again later"));
@@ -553,6 +565,7 @@ exports.getFeedRecipes = getFeedRecipes;
 exports.getRecipesByUserId = getRecipesByUserId;
 exports.getRecipesByBeanId = getRecipesByBeanId;
 exports.getFavoriteRecipes = getFavoriteRecipes;
+exports.getFavoriteIds = getFavoriteIds;
 exports.addFavorite = addFavorite;
 exports.createRecipe = createRecipe;
 exports.updateRecipe = updateRecipe;
