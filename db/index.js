@@ -6,13 +6,13 @@ const { Pool } = require("pg");
 // });
 
 const pool = new Pool({
-	user: 'leozhvng23',
-	host: 'brewlogger-dev.clg0tnjnvhqz.us-east-1.rds.amazonaws.com',
-	database: 'BrewLogger',
-	password: 'password',
+	user: "leozhvng23",
+	host: "brewlogger-dev.clg0tnjnvhqz.us-east-1.rds.amazonaws.com",
+	database: "BrewLogger",
+	password: "password",
 	port: 5432,
-  })
-
+	ssl: { rejectUnauthorized: false },
+});
 
 module.exports = {
 	async query(text, params) {
