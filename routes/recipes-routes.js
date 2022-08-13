@@ -45,6 +45,10 @@ router.get("/", recipesController.getAllRecipes);
 
 router.get("/favorite/ids", recipesController.getFavoriteIds);
 
+router.get("/like/ids", recipesController.getLikedIds);
+
+router.post("/likes/:id", recipesController.likeRecipe)
+
 router.post("/favorites/:id", recipesController.addFavorite);
 
 router.post("/", recipeValidation, recipesController.createRecipe);
@@ -52,6 +56,8 @@ router.post("/", recipeValidation, recipesController.createRecipe);
 router.patch("/:id", recipeValidation, recipesController.updateRecipe);
 
 router.delete("/favorites/:id", recipesController.removeFavorite);
+
+router.delete("/likes/:id", recipesController.unlikeRecipe)
 
 router.delete("/:id", recipesController.deleteRecipe);
 

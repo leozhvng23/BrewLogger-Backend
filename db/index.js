@@ -1,9 +1,18 @@
 const { Pool } = require("pg");
 
-const connectionString = "postgresql://leo:239239@localhost:5432/BrewLogger";
+// const connectionString = "postgresql://leo:239239@localhost:5432/BrewLogger";
+// const pool = new Pool({
+// 	connectionString,
+// });
+
 const pool = new Pool({
-	connectionString,
-});
+	user: 'leozhvng23',
+	host: 'brewlogger-dev.clg0tnjnvhqz.us-east-1.rds.amazonaws.com',
+	database: 'BrewLogger',
+	password: 'password',
+	port: 5432,
+  })
+
 
 module.exports = {
 	async query(text, params) {

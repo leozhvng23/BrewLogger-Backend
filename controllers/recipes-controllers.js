@@ -1,7 +1,7 @@
 const { validationResult } = require("express-validator");
 const db = require("../db");
 
-const uid = 6
+const uid = 6;
 
 const getAllRecipes = async (req, res, next) => {
 	let result;
@@ -48,16 +48,17 @@ const getPopularRecipes = async (req, res, next) => {
 					GROUP BY id
 					) AS likes USING(id) 
 		ORDER BY num_of_likes desc NULLS LAST
-        LIMIT 5`
+        LIMIT 5`;
 
 	let result;
 	try {
 		result = await db.query(queryText, []);
 	} catch (err) {
-		return next(new Error("Fetching popular recipes failed, please try again later."));
+		return next(
+			new Error("Fetching popular recipes failed, please try again later.")
+		);
 	}
 	res.send(result.rows);
-
 };
 
 const getFeedRecipes = async (req, res, next) => {
@@ -103,7 +104,7 @@ const getFeedRecipes = async (req, res, next) => {
 				) AS saves USING(id)
 		WHERE follow.uid_1 = $1
 		ORDER BY created_on desc
-		`
+		`;
 	let result;
 	try {
 		result = await db.query(queryText, [req.params.uid]);
@@ -312,16 +313,30 @@ const getFavoriteIds = async (req, res, next) => {
 		SELECT saves.id
 		FROM saves 
 		WHERE uid = $1
-	`
+	`;
 	let result;
 	try {
 		result = await db.query(queryText, [uid]);
 	} catch (err) {
-		return next (new Error("Fetching favorite ids failed, please try again later."));
+		return next(new Error("Fetching favorite ids failed, please try again later."));
 	}
-	res.send(result.rows)
-}
+	res.send(result.rows);
+};
 
+const getLikedIds = async (req, res, next) => {
+	const queryText = `
+		SELECT id
+		FROM like_recipe
+		WHERE uid = $1
+	`;
+	let result;
+	try {
+		result = await db.query(queryText, [uid]);
+	} catch (err) {
+		return next(new Error("Fetching liked ids failed, please try again later."));
+	}
+	res.send(result.rows);
+};
 
 const addFavorite = async (req, res, next) => {
 	const errors = validationResult(req);
@@ -340,6 +355,25 @@ const addFavorite = async (req, res, next) => {
 		return next(new Error("Adding favorite failed, please try again later"));
 	}
 	res.json({ message: "Added to favorites.", record: result.rows });
+};
+
+const likeRecipe = async (req, res, next) => {
+	const errors = validationResult(req);
+	console.log(errors);
+	if (!errors.isEmpty()) {
+		return next(new Error("Invalid params passed."));
+	}
+
+	let result;
+	try {
+		result = await db.query(
+			"INSERT INTO like_recipe(uid, id) VALUES ($1, $2) RETURNING *",
+			[uid, req.params.id]
+		);
+	} catch (err) {
+		return next(new Error("Liking recipe failed, please try again later"));
+	}
+	res.json({ message: "Liked recipe.", record: result.rows });
 };
 
 const createRecipe = async (req, res, next) => {
@@ -506,7 +540,6 @@ const updateRecipe = async (req, res, next) => {
 };
 
 const removeFavorite = async (req, res, next) => {
-
 	let result;
 	try {
 		result = await db.query("SELECT * FROM saves WHERE uid = $1 and id = $2", [
@@ -535,6 +568,35 @@ const removeFavorite = async (req, res, next) => {
 	}
 
 	res.json({ message: "Removed from favorites." });
+};
+
+const unlikeRecipe = async (req, res, next) => {
+	let result;
+	try {
+		result = await db.query("SELECT * FROM like_recipe WHERE uid = $1 and id = $2", [
+			uid,
+			req.params.id,
+		]);
+	} catch (err) {
+		return next(new Error("Removing like failed, please try again later"));
+	}
+
+	if (!result.rows[0]) {
+		return next(
+			new Error("Could not find like record for provided user id and recipe id.")
+		);
+	}
+
+	try {
+		result = await db.query("DELETE FROM like_recipe WHERE uid = $1 and id = $2", [
+			uid,
+			req.params.id,
+		]);
+	} catch (err) {
+		return next(new Error("Removing like failed, please try again later"));
+	}
+
+	res.json({ message: "Removed from likes." });
 };
 
 const deleteRecipe = async (req, res, next) => {
@@ -566,8 +628,11 @@ exports.getRecipesByUserId = getRecipesByUserId;
 exports.getRecipesByBeanId = getRecipesByBeanId;
 exports.getFavoriteRecipes = getFavoriteRecipes;
 exports.getFavoriteIds = getFavoriteIds;
+exports.getLikedIds= getLikedIds;
 exports.addFavorite = addFavorite;
+exports.likeRecipe = likeRecipe;
 exports.createRecipe = createRecipe;
 exports.updateRecipe = updateRecipe;
 exports.removeFavorite = removeFavorite;
+exports.unlikeRecipe = unlikeRecipe;
 exports.deleteRecipe = deleteRecipe;
