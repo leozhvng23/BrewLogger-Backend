@@ -14,13 +14,21 @@ const pool = new Pool({
 	ssl: { rejectUnauthorized: false },
 });
 
+// const pool = new Pool({
+// 	connectionString: process.env.DATABASE_URL,
+// 	ssl: {
+// 	  rejectUnauthorized: false
+// 	}
+//   });
+  
+
 module.exports = {
 	async query(text, params) {
 		const start = Date.now();
 		const res = await pool.query(text, params);
 		const duration = Date.now() - start;
 		console.log("executed query", { text, duration, rows: res.rowCount });
-		pool.end()
+		// pool.end()
 		return res;
 	},
 	async getClient() {
