@@ -1,10 +1,5 @@
 const { Pool } = require("pg");
 
-// const connectionString = "postgresql://leo:239239@localhost:5432/BrewLogger";
-// const pool = new Pool({
-// 	connectionString,
-// });
-
 const pool = new Pool({
 	user: "leozhvng23",
 	host: "brewlogger-dev.clg0tnjnvhqz.us-east-1.rds.amazonaws.com",
@@ -14,13 +9,6 @@ const pool = new Pool({
 	ssl: { rejectUnauthorized: false },
 });
 
-// const pool = new Pool({
-// 	connectionString: process.env.DATABASE_URL,
-// 	ssl: {
-// 	  rejectUnauthorized: false
-// 	}
-//   });
-  
 
 module.exports = {
 	async query(text, params) {
@@ -58,8 +46,3 @@ module.exports = {
 		return client;
 	},
 };
-
-// pool.query('SELECT now()', (err, res) => {
-//   console.log(err, res)
-//   pool.end()
-// })
