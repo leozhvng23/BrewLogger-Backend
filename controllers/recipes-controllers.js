@@ -4,9 +4,49 @@ const db = require("../db");
 const uid = 6;
 
 const getAllRecipes = async (req, res, next) => {
+	const queryText = `
+		SELECT recipes.id AS id, 
+			recipes.name AS name, 
+			recipes.description AS description,
+			recipes.photo_url AS photo_url, 
+			recipes.type AS type,
+			bean_roasts.name AS bean_name,
+			bean_roasts.bid AS bid,
+			users.name AS user_name,
+			users.uid AS uid,
+			make.time AS created_on,
+			brewers.name AS brewer,
+			brewers.eid AS brewer_eid,
+			comments.count :: int AS num_of_comments,
+			likes.count :: int AS num_of_likes,
+			saves.count AS is_saved 
+		FROM recipes 
+			join make using(id)
+			join users using (uid)
+			join requires_bean using (id)
+			join bean_roasts using (bid)
+			join requires_brewer using(id)
+			join equipments brewers on brewers.eid = requires_brewer.eid
+			left join (
+					SELECT id, count(*) AS count 
+					FROM comment_posted 
+					GROUP BY id
+				) AS comments USING(id)
+			left join (
+					SELECT id, count(*) AS count 
+					FROM like_recipe 
+					GROUP BY id
+					) AS likes USING(id) 
+			left join (
+					SELECT id, count(*) AS count
+					FROM saves
+					WHERE uid = $1 
+					GROUP BY id
+				) AS saves USING(id)
+		`;
 	let result;
 	try {
-		result = await db.query("SELECT * FROM recipes", []);
+		result = await db.query(queryText, [uid]);
 	} catch (err) {
 		return next(new Error("Fetching recipes failed, please try again later."));
 	}
