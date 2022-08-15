@@ -7,5 +7,10 @@ const router = new Router();
 
 module.exports = router;
 
+const commentValidation = [
+    check("id").not.isEmpty(),
+	check("content").not.isEmpty()
+];
 
 router.get("/recipe/:id", commentsController.getCommentsByRecipeId);
+router.post("/", commentValidation, commentsController.postComment)

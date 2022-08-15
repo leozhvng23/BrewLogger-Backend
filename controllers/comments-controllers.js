@@ -45,5 +45,24 @@ const getCommentsByRecipeId = async (req, res, next) => {
 	res.send(result.rows);	
 }
 
+const postComment = async (req, res, next) => {
+    const errors = validationResult(req);
+	console.log(errors);
 
-exports.getCommentsByRecipeId = getCommentsByRecipeId
+    const queryText = `
+        INSERT INTO
+        comment_posted(id, uid, time, content)
+        VALUES ($1, $2, now(), $3)
+        RETURNING *
+    `
+    let result;
+    try {
+        result = await db.query(queryText, [req.body.id, uid, req.body.content]);
+    } catch (err) {
+        return next(new Error("Posting comment failed, please try again later."));
+    }
+    res.send(result.rows[0]);
+}
+
+exports.getCommentsByRecipeId = getCommentsByRecipeId;
+exports.postComment = postComment;
